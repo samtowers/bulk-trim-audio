@@ -1,4 +1,5 @@
 import os
+import shutil
 import argparse
 from typing import Iterator
 import mutagen
@@ -25,7 +26,9 @@ def fetch_args() -> ProgramArgs:
     # Using `namespace`: See https://stackoverflow.com/a/42279784
     args = parser.parse_args(namespace=ProgramArgs())
     if not os.path.isdir(args.main_dir):
-        raise ValueError('main_dir must be a directory.')
+        raise ValueError('main_dir must be a valid directory.')
+    if os.path.isfile(args.backup_dir):
+        raise ValueError('backup_dir must not be a file.')
     if args.ignore and not os.path.isfile(args.ignore):
         raise ValueError('--ignore should be a valid text file or left unset.')
     # if os.path.split(args.main_dir)[0]:
@@ -50,12 +53,24 @@ def main():
         if reply != 'y':
             return
 
-    audio_files = get_audio_files(args.main_dir, keywords)
-    for f in audio_files:
-        if f.info.length <= args.length_mins * 60:  # Skip short files.
-            continue
-        print(f.filename)
-
+    all_audio = get_audio_files(args.main_dir, keywords)
+    # Get long audio only:
+    long_audio = [file for file in all_audio if file.info.length > args.length_mins * 60]
+        
+    if not long_audio:
+        return print('No applicable audio files detected. Exiting.')
+        
+    print('\nBacking up audio files:')
+    for f in long_audio:
+        # Backup file:
+        file_relpath = os.path.relpath(f.filename, args.main_dir)
+        # curr_file = os.path.normpath(f.filename) # shutil requires sanitized 
+        # curr_file = os.path.normpath(f.filename) # shutil requires abspath is requ
+        new_file = os.path.normpath(os.path.join(args.backup_dir, file_relpath))
+        os.makedirs(os.path.dirname(new_file), exist_ok=True)
+        print('Copy: ', f.filename, '->', new_file)
+        shutil.copy(f.filename, new_file)
+    print('\nDone.')
 
 
 def get_audio_files(root_dir: str, ignore_keywords: list[str]) -> list[mutagen.FileType]:
@@ -82,10 +97,10 @@ def get_files_recursive(root_dir: str) -> Iterator[str]:
         for file in files:
             yield os.path.join(root, file)
 
-# Get list of keywords, lowercase and trimmed.
-
-
 def parse_ignore_file(ignore_file: str) -> list[str]:
+    """
+    Get list of keywords, lowercase and trimmed.
+    """
     if not ignore_file:
         return []
     with open('file.txt', 'r') as f:
@@ -94,15 +109,3 @@ def parse_ignore_file(ignore_file: str) -> list[str]:
 
 if __name__ == '__main__':
     main()
-
-
-"""
-
-# Define the file path and the base directory
-file_path = '/root/dir1/dir2/file.txt'
-base_directory = '/root/dir1'
-
-# Get the file path relative to the base directory
-relative_path = os.path.relpath(file_path, base_directory)
-print(relative_path)
-"""
