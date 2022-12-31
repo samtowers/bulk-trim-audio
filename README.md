@@ -27,3 +27,13 @@ Do not modify the file system. Info and impacted audio files are still printed t
 `--yes`
 
 Skip warning prompts demanding user input.
+
+# Installation
+
+Clone this repository.
+
+Install project dependencies:
+
+```pip install -r requirements.txt```
+
+`ffmpeg` must be installed on your system and be present in  `$PATH`.
