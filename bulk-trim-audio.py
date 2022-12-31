@@ -1,5 +1,6 @@
 import os
 import argparse
+from typing import Iterator
 import mutagen
 
 
@@ -34,58 +35,49 @@ def fetch_args() -> ProgramArgs:
 
 
 def main():
-    # Get args:
     try:
         args = fetch_args()
     except ValueError as e:
         return print('Error: ' + str(e))
 
-    # Warn user:
+    keywords = parse_ignore_file(args.ignore)
+
     if not args.dry_run and not args.yes:
-        reply = input(
-            "Warning: This will modify files in the supplied directory. Please backup your audio folder before proceeding.\nContinue? [y/n]: ").lower()
+        reply = input("Warning: This will modify files in the supplied directory. "
+                      + "Please backup your audio folder before proceeding.\nContinue? [y/n]: ").lower()
         while reply not in ['y', 'n']:
             reply = input('Please input y or n: ').lower()
         if reply != 'y':
-            
             return
 
-    print(get_audio_files(args))
-
-    for file_path in get_audio_files(args):
-        file:mutagen.FileType = mutagen.File(file_path)
-        if file.info.length <= args.length_mins * 60: # Skip short files.
+    audio_files = get_audio_files(args.main_dir, keywords)
+    for f in audio_files:
+        if f.info.length <= args.length_mins * 60:  # Skip short files.
             continue
-        print(file_path)
-    
-
-    # Files exceeding duration:
+        print(f.filename)
 
 
-def get_audio_files(args: ProgramArgs) -> list[str]:
-    ignore_keywords: list[str] = parse_ignore_keywords(args.ignore)
-    # Find acceptable audio files:
-    files = get_files_recursive(args.main_dir)
-    audio_files = list(filter(lambda f: is_audio_file(f), files))
-    if not ignore_keywords:
-        return audio_files
-    return list(filter(lambda f: not is_ignored_file(f, ignore_keywords), files))
+
+def get_audio_files(root_dir: str, ignore_keywords: list[str]) -> list[mutagen.FileType]:
+    files = list(get_files_recursive(root_dir))
+    if ignore_keywords:
+        files = [f for f in files if not contains_a_keyword(f, ignore_keywords)]
+    audio_files = [parse_audio_file(f) for f in files]
+    return [a for a in audio_files if a != None]
 
 
-def is_audio_file(file_path: str) -> bool:
+def parse_audio_file(file_path: str) -> mutagen.FileType | None:
     try:
-        return mutagen.File(file_path) != None
+        return mutagen.File(file_path)
     except mutagen.MutagenError:
-        return False
-
-# Check if file path contains keyword in `--ignore` list:
+        return None
 
 
-def is_ignored_file(file_path: str, ignore_keywords: list[str]) -> bool:
-    return any(word in file_path.lower() for word in ignore_keywords)
+def contains_a_keyword(subject: str, keywords: list[str]) -> bool:
+    return any(word in subject.lower() for word in keywords)
 
 
-def get_files_recursive(root_dir: str) -> list[str]:
+def get_files_recursive(root_dir: str) -> Iterator[str]:
     for root, dirs, files in os.walk(root_dir):
         for file in files:
             yield os.path.join(root, file)
@@ -93,7 +85,7 @@ def get_files_recursive(root_dir: str) -> list[str]:
 # Get list of keywords, lowercase and trimmed.
 
 
-def parse_ignore_keywords(ignore_file: str) -> list[str]:
+def parse_ignore_file(ignore_file: str) -> list[str]:
     if not ignore_file:
         return []
     with open('file.txt', 'r') as f:
