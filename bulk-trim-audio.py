@@ -6,12 +6,13 @@ import mutagen
 import ffmpeg
 
 FADE_SECS = 4
+DEFAULT_CUTOFF_MINS = 16
 
 
 class ProgramArgs(argparse.Namespace):
     main_dir: str
     backup_dir: str
-    length_mins: int
+    cutoff_mins: int
     ignore: str
     dry_run: bool
     yes: bool
@@ -21,7 +22,8 @@ def fetch_args() -> ProgramArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument('main_dir', type=str, help='Input dir')
     parser.add_argument('backup_dir', type=str, help='Backup dir name')
-    parser.add_argument('--length-mins', type=int, default=15, help='Max duration before a file is trimmed')
+    parser.add_argument('--cutoff-mins', type=int, default=DEFAULT_CUTOFF_MINS,
+                        help='Max duration before a file is trimmed')
     parser.add_argument('--ignore', type=str, default='', help='Text file containing keywords')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--yes', action='store_true')
@@ -58,10 +60,10 @@ def main():
 
     all_audio = get_audio_files(args.main_dir, keywords)
     # Get audio exceeding max duration. File paths will only be required after this.
-    long_audio: list[str] = [f.filename for f in all_audio if f.info.length > args.length_mins * 60]
+    long_audio: list[str] = [f.filename for f in all_audio if f.info.length > args.cutoff_mins * 60]
 
     if not long_audio:
-        return print('No applicable audio files detected. Exiting.')
+        return print('No applicable audio files found. Exiting.')
 
     print('\Processing audio files:')
     for f in long_audio:
@@ -75,7 +77,8 @@ def main():
         print('Move: ', f, '->', backup_file)
         print('Creating trimmed copy in original location...')
         shutil.move(f, backup_file)
-        transform_audio(backup_file, f, args.length_mins*60)
+        # Use "- 1" to provide a 60sec gap between new trimmed duration and the cutoff:
+        transform_audio(backup_file, f, (args.cutoff_mins - 1) * 60) 
         # todo Dry run.
 
     print('\nBatch complete.\n')
