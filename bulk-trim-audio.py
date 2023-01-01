@@ -3,7 +3,9 @@ import shutil
 import argparse
 from typing import Iterator
 import mutagen
+import ffmpeg
 
+FADE_SECS = 4
 
 class ProgramArgs(argparse.Namespace):
     main_dir: str
@@ -54,23 +56,40 @@ def main():
             return
 
     all_audio = get_audio_files(args.main_dir, keywords)
-    # Get long audio only:
-    long_audio = [file for file in all_audio if file.info.length > args.length_mins * 60]
+    # Get audio exceeding max duration. File paths will only be required after this.
+    long_audio:list[str] = [f.filename for f in all_audio if f.info.length > args.length_mins * 60]
         
     if not long_audio:
         return print('No applicable audio files detected. Exiting.')
         
-    print('\nBacking up audio files:')
+    print('\Processing audio files:')
     for f in long_audio:
         # Backup file:
-        file_relpath = os.path.relpath(f.filename, args.main_dir)
-        # curr_file = os.path.normpath(f.filename) # shutil requires sanitized 
-        # curr_file = os.path.normpath(f.filename) # shutil requires abspath is requ
-        new_file = os.path.normpath(os.path.join(args.backup_dir, file_relpath))
-        os.makedirs(os.path.dirname(new_file), exist_ok=True)
-        print('Copy: ', f.filename, '->', new_file)
-        shutil.copy(f.filename, new_file)
-    print('\nDone.')
+        file_relpath = os.path.relpath(f, args.main_dir)
+        backup_file = os.path.normpath(os.path.join(args.backup_dir, file_relpath))
+        if os.path.isfile(backup_file):
+            print('SKIPPING ' + os.path.basename(f) + ': Backup file already exists: ' + backup_file)
+            continue
+        os.makedirs(os.path.dirname(backup_file), exist_ok=True)
+        print('Move: ', f, '->', backup_file)
+        shutil.move(f, backup_file)
+        print('Creating trimmed version in original location... ', end='')
+        transform_audio(backup_file, f, args.length_mins*60)
+        print('Done.')
+        # todo Dry run.
+        
+    print('\nBatch complete.')
+    
+    
+def transform_audio(infile:str, outfile:str, trim_secs:int) -> None:
+    (
+    ffmpeg
+    .input(infile)
+    .filter('atrim', end=trim_secs)
+    .filter('afade', t='out', st=(trim_secs-FADE_SECS), d=FADE_SECS)
+    .output(outfile, loglevel="error")
+    .run()
+    )
 
 
 def get_audio_files(root_dir: str, ignore_keywords: list[str]) -> list[mutagen.FileType]:
