@@ -7,6 +7,7 @@ import ffmpeg
 
 FADE_SECS = 4
 
+
 class ProgramArgs(argparse.Namespace):
     main_dir: str
     backup_dir: str
@@ -57,11 +58,11 @@ def main():
 
     all_audio = get_audio_files(args.main_dir, keywords)
     # Get audio exceeding max duration. File paths will only be required after this.
-    long_audio:list[str] = [f.filename for f in all_audio if f.info.length > args.length_mins * 60]
-        
+    long_audio: list[str] = [f.filename for f in all_audio if f.info.length > args.length_mins * 60]
+
     if not long_audio:
         return print('No applicable audio files detected. Exiting.')
-        
+
     print('\Processing audio files:')
     for f in long_audio:
         # Backup file:
@@ -72,23 +73,23 @@ def main():
             continue
         os.makedirs(os.path.dirname(backup_file), exist_ok=True)
         print('Move: ', f, '->', backup_file)
+        print('Creating trimmed copy in original location...')
         shutil.move(f, backup_file)
-        print('Creating trimmed version in original location... ', end='')
         transform_audio(backup_file, f, args.length_mins*60)
-        print('Done.')
         # todo Dry run.
-        
-    print('\nBatch complete.')
-    
-    
-def transform_audio(infile:str, outfile:str, trim_secs:int) -> None:
+
+    print('\nBatch complete.\n')
+
+
+def transform_audio(infile: str, outfile: str, trim_secs: int) -> None:
+    # NB: Metadata e.g. ID3 tags will still be preserved.
     (
-    ffmpeg
-    .input(infile)
-    .filter('atrim', end=trim_secs)
-    .filter('afade', t='out', st=(trim_secs-FADE_SECS), d=FADE_SECS)
-    .output(outfile, loglevel="error")
-    .run()
+        ffmpeg
+        .input(infile)
+        .filter('atrim', end=trim_secs)
+        .filter('afade', t='out', st=(trim_secs-FADE_SECS), d=FADE_SECS)
+        .output(outfile, loglevel="error")
+        .run()
     )
 
 
@@ -115,6 +116,7 @@ def get_files_recursive(root_dir: str) -> Iterator[str]:
     for root, dirs, files in os.walk(root_dir):
         for file in files:
             yield os.path.join(root, file)
+
 
 def parse_ignore_file(ignore_file: str) -> list[str]:
     """
