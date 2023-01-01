@@ -124,7 +124,7 @@ def parse_ignore_file(ignore_file: str) -> list[str]:
     """
     if not ignore_file:
         return []
-    with open('file.txt', 'r') as f:
+    with open(ignore_file, 'r') as f:
         return [line.strip().lower() for line in f if bool(line.strip())]
 
 
