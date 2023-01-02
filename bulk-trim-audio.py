@@ -28,7 +28,6 @@ def fetch_args() -> ProgramArgs:
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--yes', action='store_true')
 
-    # Using `namespace`: See https://stackoverflow.com/a/42279784
     args = parser.parse_args(namespace=ProgramArgs())
     if not os.path.isdir(args.main_dir):
         raise ValueError('main_dir must be a valid directory.')
@@ -36,13 +35,10 @@ def fetch_args() -> ProgramArgs:
         raise ValueError('backup_dir must not be a file.')
     if args.ignore and not os.path.isfile(args.ignore):
         raise ValueError('--ignore should be a valid text file or left unset.')
-    # if os.path.split(args.main_dir)[0]:
-    #     raise ValueError('main_dir must not be a nested folder or file. '
-    #                      +'It must be a folder which exists in the current working directory.')
     return args
 
 
-def main():
+def main() -> None:
     try:
         args = fetch_args()
     except ValueError as e:
@@ -65,7 +61,7 @@ def main():
     if not long_audio:
         return print('No applicable audio files found. Exiting.')
 
-    print('\Processing audio files:')
+    print('\nProcessing audio files:\n' if not args.dry_run else '\nDRY RUN: These operations will NOT take place:\n')
     for f in long_audio:
         # Backup file:
         file_relpath = os.path.relpath(f, args.main_dir)
@@ -73,13 +69,14 @@ def main():
         if os.path.isfile(backup_file):
             print('SKIPPING ' + os.path.basename(f) + ': Backup file already exists: ' + backup_file)
             continue
-        os.makedirs(os.path.dirname(backup_file), exist_ok=True)
         print('Move: ', f, '->', backup_file)
+        if not args.dry_run:
+            os.makedirs(os.path.dirname(backup_file), exist_ok=True)
+            shutil.move(f, backup_file)
         print('Creating trimmed copy in original location...')
-        shutil.move(f, backup_file)
-        # Use "- 1" to provide a 60sec gap between new trimmed duration and the cutoff:
-        transform_audio(backup_file, f, (args.cutoff_mins - 1) * 60) 
-        # todo Dry run.
+        if not args.dry_run:
+            # Use "- 1" to provide a 60sec gap between new trimmed duration and the cutoff:
+            transform_audio(backup_file, f, (args.cutoff_mins - 1) * 60) 
 
     print('\nBatch complete.\n')
 

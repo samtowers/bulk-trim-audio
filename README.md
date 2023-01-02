@@ -1,7 +1,7 @@
 # Bulk Trim Audio
 Trim/crop extended music in bulk.
 ```
-batch-trim-audio.py dir newdir [--cutoff-mins 16] [--ignore keywords.txt] [--dry-run] [--yes]
+bulk-trim-audio.py dir newdir [--cutoff-mins 16] [--ignore keywords.txt] [--dry-run] [--yes]
 ```
 All audio files nested within `dir` will be trimmed if their duration exceeds `--cutoff-mins` (default: 16); audio already shorter than this will be ignored. 
 

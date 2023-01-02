@@ -12,7 +12,7 @@
             "justMyCode": true
         },
         {
-            "name": "Music Folder",
+            "name": "Music (w/ warning prompt)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/bulk-trim-audio.py",
@@ -21,7 +21,7 @@
             "justMyCode": true
         },
         {
-            "name": "Music folder w/ --yes",
+            "name": "Music",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/bulk-trim-audio.py",
@@ -30,7 +30,16 @@
             "justMyCode": true
         },
         {
-            "name": "Use --ignore keywords.txt",
+            "name": "Music --dry-run",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bulk-trim-audio.py",
+            "args": ["tests/music", "tests/music-backup", "--dry-run"],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Music --ignore keywords.txt",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/bulk-trim-audio.py",
