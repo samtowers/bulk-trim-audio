@@ -5,7 +5,7 @@ from typing import Iterator
 import mutagen
 import ffmpeg
 
-FADE_SECS = 4
+FADE_SECS = 5
 DEFAULT_CUTOFF_MINS = 16
 
 
