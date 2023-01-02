@@ -1,0 +1,42 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "No Args",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bulk-trim-audio.py",
+            "justMyCode": true
+        },
+        {
+            "name": "Music Folder",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bulk-trim-audio.py",
+            "args": ["tests/music", "tests/music-backup"],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Music folder w/ --yes",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bulk-trim-audio.py",
+            "args": ["tests/music", "tests/music-backup", "--yes"],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Use --ignore keywords.txt",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bulk-trim-audio.py",
+            "args": ["tests/music", "tests/music-backup", "--yes", "--ignore", "keywords.txt"],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        }
+    ]
+}
