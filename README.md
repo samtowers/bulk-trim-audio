@@ -7,7 +7,7 @@ All audio files nested within `dir` will be trimmed if their duration exceeds `-
 
 Trimmed audio is reduced to `(cutoff-mins - 1)` minutes. E.g. audio longer than `16` minutes will be trimmed to exactly `15` minutes. This it to provide a gap between the cutoff duration and new duration. 
 
-A four second fadeout will be applied to the end of trimmed audio.
+A five second fadeout will be applied to the end of trimmed audio.
 
 Impacted audio files will be backed-up into `newdir` before being trimmed. This is done to preserve a copy of the file with its original duration. `newdir` will be created if it doesn't exist.  Any nested folder structures will also be recreated within `newdir`.
 
